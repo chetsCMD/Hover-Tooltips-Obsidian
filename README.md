@@ -1,4 +1,4 @@
-EN:
+# EN:
 # Hover Tooltips
 A plugin for Obsidian that adds popup hints on hover.
 
@@ -14,7 +14,8 @@ To use it, you can use Ctrl+P or use keyboard shortcuts in the settings.
 
 **Note:** The plugin works in preview mode. In source code mode, the source syntax is displayed.
 
-RU:
+# RU:
+
 Плагин для Obsidian, который добавляет всплывающие подсказки при наведении курсора мыши.
 
 ## Использование
@@ -25,6 +26,6 @@ RU:
 <img width="353" height="119" alt="image" src="https://github.com/user-attachments/assets/1934446d-8392-4175-a2b4-76ddaeb70227" />
 
 ### Настройки
-Для использования можно воспользоваться Ctrl+P или назначить горячие клавиша в настройках.
+Для использования можно воспользоваться Ctrl+P или назначить горячие клавиши в настройках.
 
 **Примечание:** Плагин работает в режиме предварительного просмотра. В режиме исходного кода отображается исходный синтаксис.

@@ -12,6 +12,8 @@ Syntax: `{/{word/description}/}`
 
 <img width="256" height="103" alt="image" src="https://github.com/user-attachments/assets/0f908162-7c7b-4d4d-bf0d-71e44d8d2b56" />
 
+The full possibility of using the .md\ syntax is presented.
+
 **Settings**
 
 To use it, you can use Ctrl+P or use keyboard shortcuts in the settings.

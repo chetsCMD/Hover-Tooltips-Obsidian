@@ -6,6 +6,7 @@ A plugin for Obsidian that adds popup hints on hover.
 ### Syntax: `{/{word/description}/}`
 Example:
 I use {/{Obsidian/Powerful note-taking system}/} a lot.
+
 <img width="256" height="103" alt="image" src="https://github.com/user-attachments/assets/0f908162-7c7b-4d4d-bf0d-71e44d8d2b56" />
 
 ### Settings
@@ -20,6 +21,7 @@ RU:
 ### Синтаксис: `{/{слово/описание}/}`
 Пример:
 Я часто использую {/{Obsidian/Мощную систему ведения заметок}/}.
+
 <img width="353" height="119" alt="image" src="https://github.com/user-attachments/assets/1934446d-8392-4175-a2b4-76ddaeb70227" />
 
 ### Настройки

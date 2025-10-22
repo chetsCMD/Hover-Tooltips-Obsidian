@@ -25,6 +25,10 @@ To use it, you can use Ctrl+P or use keyboard shortcuts in the settings.
 
 <img width="353" height="119" alt="image" src="https://github.com/user-attachments/assets/1934446d-8392-4175-a2b4-76ddaeb70227" />
 
+Представлена полная возможность использования .md-синтаксиса.
+
+https://github.com/user-attachments/assets/0dd4c748-5230-4f18-b5a0-8fbd6aa0b9f3
+
 ### Настройки
 Для использования можно воспользоваться Ctrl+P или назначить горячие клавиши в настройках.
 

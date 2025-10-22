@@ -1,9 +1,9 @@
 {
   "id": "hover-tooltips",
-  "name": "Hover Tooltips",
+  "name": "Hover Tooltips", 
   "version": "1.0.0",
   "minAppVersion": "0.15.0",
-  "description": "Adds interactive hover tooltips to text.",
+  "description": "Adds custom tooltips on hover.",
   "author": "chetsCMD",
   "authorUrl": "https://github.com/chetsCMD",
   "isDesktopOnly": true

@@ -2,42 +2,72 @@
 
 **Hover Tooltips**
 
-A plugin for Obsidian that adds popup hints on hover.
+A plugin for Obsidian that adds interactive popup hints with Markdown support.
 
-**Usage**
+## Features
 
-Syntax: `{/{word/description}/}`
+- **Interactive tooltips** — hover to view descriptions
+- **Click to pin** — left-click tooltips to keep them open
+- **Full Markdown support** — use bold, italic, code, links
+- **Internal/external links** — clickable links within tooltips
 
-**Example**: I use {/{Obsidian/Powerful note-taking system}/} a lot.
+## Usage
 
-<img width="256" height="103" alt="image" src="https://github.com/user-attachments/assets/0f908162-7c7b-4d4d-bf0d-71e44d8d2b56" />
+**Syntax**: `{/{word/description}/}`
 
-The full possibility of using the .md\ syntax is presented.
+**Example**: I use {/{Obsidian/Powerful note-taking system with **Markdown** support}/} daily.
 
-**Settings**
+<img width="413" height="120" alt="image" src="https://github.com/user-attachments/assets/44fb545f-6d62-4c9f-bb75-c5c335417f65" />
 
-To use it, you can use Ctrl+P or use keyboard shortcuts in the settings.
+## Markdown Support
 
-**Note:** The plugin works in preview mode. In source code mode, the source syntax is displayed.
+Tooltips support full Markdown formatting:
+- `**bold text**` and `*italic*`
+- `` `inline code` ``
+- `==highlighted text==`
+- `[link text](url)` — external links
+- `[[internal link]]` or `[[link|display text]]` — internal wiki links
+- Line breaks (converted to `/` separators)
+<img width="198" height="224" alt="image" src="https://github.com/user-attachments/assets/b9cf7626-b7b0-4f2d-a189-3d0d3af52e46" />
+
+## Settings
+
+You can assign hotkeys to call the tooltip menu in the settings.
+
+---
 
 # RU:
 
-Плагин для Obsidian, который добавляет всплывающие подсказки при наведении курсора мыши.
+**Hover Tooltips**
 
-**Использование**
+Плагин для Obsidian, который добавляет интерактивные **всплывающие подсказки** с поддержкой Markdown.
+
+## Возможности
+
+- **Интерактивные подсказки** — наведите курсор для просмотра описания
+- **Клик для закрепления** — кликните левой кнопкой мыши для фиксации подсказки
+- **Полная поддержка Markdown** — используйте жирный, курсив, код, ссылки
+- **Внутренние/внешние ссылки** — кликабельные ссылки в подсказках
+
+## Использование
 
 **Синтаксис**: `{/{слово/описание}/}`
 
-**Пример**: Я часто использую {/{Obsidian/Мощную систему ведения заметок}/}.
+**Пример**: Я ежедневно использую {/{Obsidian/Мощную систему ведения заметок с поддержкой **Markdown**}/}.
 
-<img width="353" height="119" alt="image" src="https://github.com/user-attachments/assets/1934446d-8392-4175-a2b4-76ddaeb70227" />
+<img width="478" height="151" alt="image" src="https://github.com/user-attachments/assets/e92e451c-9f89-4d6a-b265-cf0183ef8bad" />
 
-Представлена полная возможность использования .md-синтаксиса.
+## Поддержка Markdown
 
-https://github.com/user-attachments/assets/0dd4c748-5230-4f18-b5a0-8fbd6aa0b9f3
+Подсказки поддерживают полное форматирование Markdown:
+- `**жирный текст**` и `*курсив*`
+- `` `встроенный код` ``
+- `==выделенный текст==`
+- `[текст ссылки](url)` — внешние ссылки
+- `[[внутренняя ссылка]]` или `[[ссылка|отображаемый текст]]` — внутренние вики-ссылки
+- Переносы строк (конвертируются в разделители `/`)
+<img width="253" height="238" alt="image" src="https://github.com/user-attachments/assets/25362f8d-7d14-4588-b3d3-ed882a637720" />
 
-**Настройки**
+## Настройки
 
-Для использования можно воспользоваться Ctrl+P или назначить горячие клавиши в настройках.
-
-**Примечание:** Плагин работает в режиме предварительного просмотра. В режиме исходного кода отображается исходный синтаксис.
+В настройках можно назначить горячие клавиши для вызова меню подсказки

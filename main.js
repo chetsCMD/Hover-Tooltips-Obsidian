@@ -82,7 +82,71 @@ const tooltipViewPlugin = (plugin) => {
 };
 
 class TooltipPlugin extends Plugin {
+  sanitizeHtml(html) {
+    const allowedTags = ['code', 'strong', 'em', 'mark', 'a', 'br'];
+    const allowedAttributes = {
+      'a': ['href', 'class', 'target', 'rel']
+    };
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    const sanitizeNode = (node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        return node.cloneNode();
+      }
+
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const tagName = node.tagName.toLowerCase();
+
+        if (!allowedTags.includes(tagName)) {
+          const fragment = document.createDocumentFragment();
+          Array.from(node.childNodes).forEach(child => {
+            const sanitizedChild = sanitizeNode(child);
+            if (sanitizedChild) {
+              fragment.appendChild(sanitizedChild);
+            }
+          });
+          return fragment;
+        }
+
+        const newElement = document.createElement(tagName);
+
+        if (allowedAttributes[tagName]) {
+          allowedAttributes[tagName].forEach(attr => {
+            if (node.hasAttribute(attr)) {
+              newElement.setAttribute(attr, node.getAttribute(attr));
+            }
+          });
+        }
+
+        Array.from(node.childNodes).forEach(child => {
+          const sanitizedChild = sanitizeNode(child);
+          if (sanitizedChild) {
+            newElement.appendChild(sanitizedChild);
+          }
+        });
+
+        return newElement;
+      }
+
+      return null;
+    };
+
+    const sanitizedDiv = document.createElement('div');
+    Array.from(doc.body.childNodes).forEach(child => {
+      const sanitizedChild = sanitizeNode(child);
+      if (sanitizedChild) {
+        sanitizedDiv.appendChild(sanitizedChild);
+      }
+    });
+
+    return sanitizedDiv.innerHTML;
+  }
+
   processMarkdownLine(line) {
+    line = this.escapeHtml(line);
+    
     line = line.replace(/`([^`]+)`/g, '<code>$1</code>');
     line = line.replace(/\*\*([^\*]+)\*\*/g, '<strong>$1</strong>');
     line = line.replace(/\*([^\*]+)\*/g, '<em>$1</em>');
@@ -125,9 +189,11 @@ class TooltipPlugin extends Plugin {
         const lines = tooltip.split('\n').map(line => line.trim()).filter(line => line.length > 0);
         const formattedTooltip = lines.join(' / ');
         
+        const escapedWord = this.escapeHtml(word.trim());
+        
         return `
           <span class="tooltip-word" data-tooltip="${formattedTooltip.replace(/"/g, '&quot;')}" onclick="event.stopPropagation();">
-            ${word}
+            ${escapedWord}
           </span>
         `;
       });
@@ -198,13 +264,17 @@ class TooltipPlugin extends Plugin {
     const lines = content.split(' / ').map(line => line.trim());
     
     const processedLines = lines.map(line => {
-      const processedLine = this.processMarkdownLine(line);
-      return processedLine;
+      if (line.match(/<[^>]+>/)) {
+        return line;
+      } else {
+        return this.processMarkdownLine(line);
+      }
     });
     
     const tooltipHTML = processedLines.join('<br>');
+    const sanitizedHTML = this.sanitizeHtml(tooltipHTML);
     
-    this.tooltipElement.innerHTML = tooltipHTML;
+    this.tooltipElement.innerHTML = sanitizedHTML;
     
     const rect = element.getBoundingClientRect();
     const tooltipRect = this.tooltipElement.getBoundingClientRect();

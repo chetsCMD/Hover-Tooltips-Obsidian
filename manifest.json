@@ -1,11 +1,10 @@
 {
   "id": "hover-tooltips",
   "name": "Hover Tooltips", 
-  "version": "2.0.0",
+  "version": "2.1.0",
   "minAppVersion": "1.8.0",
   "description": "Adds custom tooltips on hover. Supports markdown, click-to-pin, interactive links.",
   "author": "chetsCMD",
   "authorUrl": "https://github.com/chetsCMD",
   "isDesktopOnly": false
 }
-

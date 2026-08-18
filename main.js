@@ -407,6 +407,56 @@ class TooltipPlugin extends Plugin {
     return new RegExp(`(?<![\\p{L}\\p{N}_])(${pattern})(?![\\p{L}\\p{N}_])`, 'giu');
   }
 
+  replaceTooltipSyntaxInElement(el) {
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+
+    const textNodes = [];
+    let current;
+    while ((current = walker.nextNode())) {
+      textNodes.push(current);
+    }
+
+    textNodes.forEach(textNode => {
+      const text = textNode.nodeValue;
+      SYNTAX_REGEX.lastIndex = 0;
+      if (!SYNTAX_REGEX.test(text)) return;
+      SYNTAX_REGEX.lastIndex = 0;
+
+      const fragment = document.createDocumentFragment();
+      let lastIndex = 0;
+      let match;
+
+      while ((match = SYNTAX_REGEX.exec(text)) !== null) {
+        const start = match.index;
+        const end = start + match[0].length;
+
+        if (start > lastIndex) {
+          fragment.appendChild(document.createTextNode(text.slice(lastIndex, start)));
+        }
+
+        const word = match[1].trim();
+        const tooltip = match[2].trim().replace(/\}$/, '');
+        const lines = tooltip.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        const formattedTooltip = lines.join(' / ');
+
+        const span = document.createElement('span');
+        span.className = 'tooltip-word';
+        span.setAttribute('data-tooltip', formattedTooltip);
+        span.setAttribute('onclick', 'event.stopPropagation();');
+        span.textContent = word;
+
+        fragment.appendChild(span);
+        lastIndex = end;
+      }
+
+      if (lastIndex < text.length) {
+        fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+      }
+
+      textNode.parentNode.replaceChild(fragment, textNode);
+    });
+  }
+
   decorateDictionaryWordsInElement(el, filePath) {
     const dictMap = this.getDictionaryWordsForPath(filePath);
     if (dictMap.size === 0) return;
@@ -509,20 +559,7 @@ class TooltipPlugin extends Plugin {
     this.registerEditorExtension(tooltipViewPlugin(this));
 
     this.registerMarkdownPostProcessor((el, ctx) => {
-      el.innerHTML = el.innerHTML.replace(SYNTAX_REGEX, (_, word, tooltip) => {
-        tooltip = tooltip.trim().replace(/\}$/, "");
-
-        const lines = tooltip.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-        const formattedTooltip = lines.join(' / ');
-
-        const escapedWord = this.escapeHtml(word.trim());
-
-        return `
-          <span class="tooltip-word" data-tooltip="${formattedTooltip.replace(/"/g, '&quot;')}" onclick="event.stopPropagation();">
-            ${escapedWord}
-          </span>
-        `;
-      });
+      this.replaceTooltipSyntaxInElement(el);
 
       el.querySelectorAll('.tooltip-word').forEach(wordElement => {
         wordElement.addEventListener('mouseenter', (e) => {

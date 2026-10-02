@@ -11,6 +11,8 @@ A plugin for Obsidian that adds interactive popup hints with Markdown support.
 - **Full Markdown support** — use bold, italic, code, links
 - **Internal/external links** — clickable links within tooltips
 - **Global dictionaries** — write tooltips once and see them across all notes
+- **Synonyms** — one tooltip can be shown for several word forms
+- **Dictionary search** — quickly find words and synonyms in settings
 
 ## Usage
 
@@ -39,9 +41,25 @@ https://github.com/user-attachments/assets/eab2b749-0d93-4ea5-bad2-1bb39e8718bd
 ### Globally in a folder
 https://github.com/user-attachments/assets/49464469-fdfd-4883-8245-83f038716874
 
+### Synonyms
+
+Each dictionary entry can have any number of synonyms. All synonyms share the same tooltip as the main word.
+To add a synonym, open the word editor and click **+ Synonym**.
+
+### Search
+
+Each dictionary has a **Search** field above the word list. It filters words
+and synonyms by substring, so you can quickly find an entry in a large
+dictionary.
+
 ## Settings
 
 In the settings, you can assign hotkeys to call the tooltip menu and also configure dictionaries.
+
+For each dictionary you can set:
+- **Name** — a label to tell dictionaries apart
+- **Scope** — an entire folder or a specific note
+- **Words** — the entries themselves, each with synonyms and a tooltip
 
 ---
 
@@ -58,6 +76,8 @@ In the settings, you can assign hotkeys to call the tooltip menu and also config
 - **Полная поддержка Markdown** — используйте жирный, курсив, код, ссылки
 - **Внутренние/внешние ссылки** — кликабельные ссылки в подсказках
 - **Глобальные словари** — написать подсказки один раз и видеть во всех заметках
+- **Синонимы** — одна подсказка может показываться для нескольких форм слова
+- **Поиск по словарю** — быстрый поиск слов и синонимов в настройках
 
 ## Использование
 
@@ -86,6 +106,22 @@ https://github.com/user-attachments/assets/eab2b749-0d93-4ea5-bad2-1bb39e8718bd
 ### Глобально в папке
 https://github.com/user-attachments/assets/49464469-fdfd-4883-8245-83f038716874
 
+### Синонимы
+
+У каждой записи словаря может быть любое количество синонимов. Все синонимы
+показывают ту же подсказку, что и основное слово.
+Чтобы добавить синоним, откройте редактор слова и нажмите **+ Synonym**.
+
+### Поиск
+
+В каждом словаре над списком слов есть поле **Search**. Оно фильтрует слова
+и синонимы по подстроке, что позволяет быстро найти запись в большом словаре.
+
 ## Настройки
 
-В настройках можно назначить горячие клавиши для вызова меню подсказки, а также настроить словари
+В настройках можно назначить горячие клавиши для вызова меню подсказки, а также настроить словари.
+
+Для каждого словаря можно задать:
+- **Name** — название, чтобы отличать словари друг от друга
+- **Scope** — целая папка или конкретная заметка
+- **Words** — сами записи, каждая с синонимами и подсказкой

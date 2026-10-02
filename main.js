@@ -392,6 +392,10 @@ class TooltipPlugin extends Plugin {
       for (const entry of dictionary.words || []) {
         if (!entry.word) continue;
         map.set(entry.word.trim().toLowerCase(), entry.tooltip);
+        for (const synonym of entry.synonyms || []) {
+          const key = (synonym || '').trim().toLowerCase();
+          if (key) map.set(key, entry.tooltip);
+        }
       }
     }
 
@@ -405,6 +409,56 @@ class TooltipPlugin extends Plugin {
     words.sort((a, b) => b.length - a.length);
     const pattern = words.map(escapeRegex).join('|');
     return new RegExp(`(?<![\\p{L}\\p{N}_])(${pattern})(?![\\p{L}\\p{N}_])`, 'giu');
+  }
+
+  replaceTooltipSyntaxInElement(el) {
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+
+    const textNodes = [];
+    let current;
+    while ((current = walker.nextNode())) {
+      textNodes.push(current);
+    }
+
+    textNodes.forEach(textNode => {
+      const text = textNode.nodeValue;
+      SYNTAX_REGEX.lastIndex = 0;
+      if (!SYNTAX_REGEX.test(text)) return;
+      SYNTAX_REGEX.lastIndex = 0;
+
+      const fragment = document.createDocumentFragment();
+      let lastIndex = 0;
+      let match;
+
+      while ((match = SYNTAX_REGEX.exec(text)) !== null) {
+        const start = match.index;
+        const end = start + match[0].length;
+
+        if (start > lastIndex) {
+          fragment.appendChild(document.createTextNode(text.slice(lastIndex, start)));
+        }
+
+        const word = match[1].trim();
+        const tooltip = match[2].trim().replace(/\}$/, '');
+        const lines = tooltip.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        const formattedTooltip = lines.join(' / ');
+
+        const span = document.createElement('span');
+        span.className = 'tooltip-word';
+        span.setAttribute('data-tooltip', formattedTooltip);
+        span.setAttribute('onclick', 'event.stopPropagation();');
+        span.textContent = word;
+
+        fragment.appendChild(span);
+        lastIndex = end;
+      }
+
+      if (lastIndex < text.length) {
+        fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+      }
+
+      textNode.parentNode.replaceChild(fragment, textNode);
+    });
   }
 
   decorateDictionaryWordsInElement(el, filePath) {
@@ -509,20 +563,7 @@ class TooltipPlugin extends Plugin {
     this.registerEditorExtension(tooltipViewPlugin(this));
 
     this.registerMarkdownPostProcessor((el, ctx) => {
-      el.innerHTML = el.innerHTML.replace(SYNTAX_REGEX, (_, word, tooltip) => {
-        tooltip = tooltip.trim().replace(/\}$/, "");
-
-        const lines = tooltip.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-        const formattedTooltip = lines.join(' / ');
-
-        const escapedWord = this.escapeHtml(word.trim());
-
-        return `
-          <span class="tooltip-word" data-tooltip="${formattedTooltip.replace(/"/g, '&quot;')}" onclick="event.stopPropagation();">
-            ${escapedWord}
-          </span>
-        `;
-      });
+      this.replaceTooltipSyntaxInElement(el);
 
       el.querySelectorAll('.tooltip-word').forEach(wordElement => {
         wordElement.addEventListener('mouseenter', (e) => {
@@ -741,7 +782,7 @@ class TooltipPromptModal extends Modal {
 class DictionaryWordModal extends Modal {
   constructor(app, existingEntry, onSubmit) {
     super(app);
-    this.existingEntry = existingEntry || { word: '', tooltip: '' };
+    this.existingEntry = existingEntry || { word: '', synonyms: [], tooltip: '' };
     this.onSubmit = onSubmit;
   }
 
@@ -752,6 +793,7 @@ class DictionaryWordModal extends Modal {
 
     let wordValue = this.existingEntry.word;
     let tooltipValue = (this.existingEntry.tooltip || '').split(' / ').join('\n');
+    const synonyms = [...(this.existingEntry.synonyms || [])];
 
     new Setting(contentEl)
       .setName("Word or phrase")
@@ -760,6 +802,52 @@ class DictionaryWordModal extends Modal {
         text.onChange(v => wordValue = v);
         text.inputEl.style.width = "100%";
       });
+
+    const synonymsContainer = contentEl.createDiv();
+
+    const renderSynonyms = () => {
+      synonymsContainer.empty();
+
+      synonyms.forEach((value, index) => {
+        const row = new Setting(synonymsContainer)
+          .addText(text => {
+            text.setPlaceholder("Synonym");
+            text.setValue(value);
+            text.onChange(v => synonyms[index] = v);
+            text.inputEl.style.width = "100%";
+          })
+          .addExtraButton(btn => {
+            btn.setIcon("x");
+            btn.setTooltip("Remove synonym");
+            btn.onClick(() => {
+              synonyms.splice(index, 1);
+              renderSynonyms();
+            });
+          });
+
+        row.infoEl.remove();
+        row.settingEl.style.borderTop = "none";
+        row.settingEl.style.padding = "4px 0";
+        row.controlEl.style.flexGrow = "1";
+        row.controlEl.style.justifyContent = "flex-start";
+      });
+    };
+
+    new Setting(contentEl)
+      .setName("Synonyms")
+      .setDesc("Each synonym shows the same tooltip as the main word")
+      .addButton(btn => {
+        btn.setButtonText("+ Synonym");
+        btn.onClick(() => {
+          synonyms.push('');
+          renderSynonyms();
+          const inputs = synonymsContainer.querySelectorAll('input');
+          if (inputs.length > 0) inputs[inputs.length - 1].focus();
+        });
+      });
+
+    contentEl.appendChild(synonymsContainer);
+    renderSynonyms();
 
     new Setting(contentEl)
       .setName("Tooltip")
@@ -775,17 +863,28 @@ class DictionaryWordModal extends Modal {
         btn.setButtonText("Save");
         btn.setCta();
         btn.onClick(() => {
-          if (!wordValue.trim()) {
+          const mainWord = wordValue.trim();
+          if (!mainWord) {
             new Notice("Enter a word or phrase");
             return;
           }
+
+          const seen = new Set([mainWord.toLowerCase()]);
+          const cleanedSynonyms = [];
+          synonyms.forEach(s => {
+            const trimmed = (s || '').trim();
+            const key = trimmed.toLowerCase();
+            if (!trimmed || seen.has(key)) return;
+            seen.add(key);
+            cleanedSynonyms.push(trimmed);
+          });
 
           const lines = tooltipValue.split('\n')
             .map(line => line.trim())
             .filter(line => line.length > 0);
           const formattedTooltip = lines.join(' / ');
 
-          this.onSubmit({ word: wordValue.trim(), tooltip: formattedTooltip });
+          this.onSubmit({ word: mainWord, synonyms: cleanedSynonyms, tooltip: formattedTooltip });
           this.close();
         });
       });
@@ -800,6 +899,7 @@ class TooltipSettingTab extends PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
+    this.searchQueries = {};
   }
 
   display() {
@@ -820,6 +920,7 @@ class TooltipSettingTab extends PluginSettingTab {
         btn.onClick(async () => {
           this.plugin.settings.dictionaries.push({
             id: generateId(),
+            name: '',
             path: '',
             type: 'folder',
             words: [],
@@ -840,6 +941,18 @@ class TooltipSettingTab extends PluginSettingTab {
     box.style.borderRadius = "8px";
     box.style.padding = "12px";
     box.style.marginTop = "16px";
+
+    new Setting(box)
+      .setName("Name")
+      .addText(text => {
+        text.setPlaceholder("Dictionary name");
+        text.setValue(dictionary.name || '');
+        text.onChange(async (value) => {
+          dictionary.name = value;
+          await this.plugin.saveSettings();
+        });
+        text.inputEl.style.width = "100%";
+      });
 
     new Setting(box)
       .setName("Scope")
@@ -875,6 +988,7 @@ class TooltipSettingTab extends PluginSettingTab {
         btn.setTooltip("Delete dictionary");
         btn.onClick(async () => {
           this.plugin.settings.dictionaries = this.plugin.settings.dictionaries.filter(d => d.id !== dictionary.id);
+          delete this.searchQueries[dictionary.id];
           await this.plugin.saveSettings();
           this.display();
         });
@@ -883,40 +997,89 @@ class TooltipSettingTab extends PluginSettingTab {
     const wordsContainer = box.createDiv({ cls: "tooltip-dict-words" });
     wordsContainer.style.marginTop = "8px";
 
-    (dictionary.words || []).forEach((entry, index) => {
-      const row = wordsContainer.createDiv();
-      row.style.display = "flex";
-      row.style.alignItems = "center";
-      row.style.justifyContent = "space-between";
-      row.style.padding = "6px 0";
-      row.style.borderTop = "1px solid var(--background-modifier-border)";
+    const renderWords = () => {
+      wordsContainer.empty();
 
-      const label = row.createDiv();
-      label.style.flexGrow = "1";
-      label.createEl("strong", { text: entry.word });
-      label.createEl("div", { text: entry.tooltip, cls: "tooltip-dict-preview" });
-      label.querySelector(".tooltip-dict-preview").style.color = "var(--text-muted)";
-      label.querySelector(".tooltip-dict-preview").style.fontSize = "0.9em";
+      const query = (this.searchQueries[dictionary.id] || '').trim().toLowerCase();
+      const allWords = dictionary.words || [];
 
-      const actions = row.createDiv();
-      const editBtn = actions.createEl("button", { text: "✎" });
-      editBtn.style.marginRight = "6px";
-      editBtn.onclick = () => {
-        const modal = new DictionaryWordModal(this.app, entry, async (updated) => {
-          dictionary.words[index] = updated;
+      const filtered = query
+        ? allWords.filter(entry => {
+            if ((entry.word || '').toLowerCase().includes(query)) return true;
+            return (entry.synonyms || []).some(s => (s || '').toLowerCase().includes(query));
+          })
+        : allWords;
+
+      if (filtered.length === 0) {
+        const empty = wordsContainer.createDiv({
+          text: query ? "No words found" : "No words yet",
+        });
+        empty.style.color = "var(--text-muted)";
+        empty.style.padding = "8px 0";
+        empty.style.borderTop = "1px solid var(--background-modifier-border)";
+        return;
+      }
+
+      filtered.forEach((entry) => {
+        const row = wordsContainer.createDiv();
+        row.style.display = "flex";
+        row.style.alignItems = "center";
+        row.style.justifyContent = "space-between";
+        row.style.padding = "6px 0";
+        row.style.borderTop = "1px solid var(--background-modifier-border)";
+
+        const label = row.createDiv();
+        label.style.flexGrow = "1";
+        label.createEl("strong", { text: entry.word });
+
+        if (entry.synonyms && entry.synonyms.length > 0) {
+          const synonymsEl = label.createEl("div", { text: `Synonyms: ${entry.synonyms.join(', ')}` });
+          synonymsEl.style.color = "var(--text-accent)";
+          synonymsEl.style.fontSize = "0.9em";
+        }
+
+        const preview = label.createEl("div", { text: entry.tooltip, cls: "tooltip-dict-preview" });
+        preview.style.color = "var(--text-muted)";
+        preview.style.fontSize = "0.9em";
+
+        const actions = row.createDiv();
+        const editBtn = actions.createEl("button", { text: "✎" });
+        editBtn.style.marginRight = "6px";
+        editBtn.onclick = () => {
+          const modal = new DictionaryWordModal(this.app, entry, async (updated) => {
+            const index = dictionary.words.indexOf(entry);
+            if (index !== -1) dictionary.words[index] = updated;
+            await this.plugin.saveSettings();
+            this.display();
+          });
+          modal.open();
+        };
+
+        const deleteBtn = actions.createEl("button", { text: "✕" });
+        deleteBtn.onclick = async () => {
+          const index = dictionary.words.indexOf(entry);
+          if (index !== -1) dictionary.words.splice(index, 1);
           await this.plugin.saveSettings();
           this.display();
-        });
-        modal.open();
-      };
+        };
+      });
+    };
 
-      const deleteBtn = actions.createEl("button", { text: "✕" });
-      deleteBtn.onclick = async () => {
-        dictionary.words.splice(index, 1);
-        await this.plugin.saveSettings();
-        this.display();
-      };
-    });
+    const searchSetting = new Setting(box)
+      .setName("Search")
+      .addText(text => {
+        text.setPlaceholder("Word or synonym...");
+        text.setValue(this.searchQueries[dictionary.id] || '');
+        text.onChange((value) => {
+          this.searchQueries[dictionary.id] = value;
+          renderWords();
+        });
+        text.inputEl.style.width = "100%";
+      });
+
+    box.insertBefore(searchSetting.settingEl, wordsContainer);
+
+    renderWords();
 
     const addWordSetting = new Setting(box)
       .addButton(btn => {
